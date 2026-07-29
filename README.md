@@ -1,102 +1,87 @@
-# 🌐 OmniCore | The Ultimate All-In-One Discord Bot
+# OmniCore Discord Bot
 
-![OmniCore Banner](https://placehold.co/1500x500/7289DA/FFFFFF/png?text=OmniCore&font=lato)
+OmniCore is an all-in-one Discord bot for moderation, utility, and community management. It is designed to be clean to run, easy to extend, and ready for real server use.
 
-**Your server’s new command center — Moderation, Utility, Community Tools & Analytics in one premium package.**
+## Highlights
 
----
+- Moderation tools for day-to-day server management
+- Utility commands for quick server assistance
+- Community features for engagement and retention
+- A cleaner startup path with safer configuration handling
+- Easy extension loading through cogs
+- Basic built-in commands such as `ping`, `about`, and owner-only command sync
 
-### 🔥 Why Choose OmniCore?
+## Getting Started
 
-OmniCore is the **next-generation Discord bot** built for **server owners who demand power, convenience, and customization** — whether you're running a gaming community, support server, or productivity hub.
+### 1) Clone the repository
+```bash
+git clone https://github.com/Kazumiii-arch/OmniCore-Discord-Bot.git
+cd OmniCore-Discord-Bot
+```
 
-Forget juggling 5+ bots. OmniCore replaces them all.
+### 2) Create a virtual environment and install dependencies
+```bash
+python -m venv venv
 
-### 🚀 Getting Started
+# Windows
+venv\Scripts\activate
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/YOUR_USERNAME/OmniCore-Discord-Bot.git](https://github.com/YOUR_USERNAME/OmniCore-Discord-Bot.git)
-    cd OmniCore-Discord-Bot
-    ```
+# macOS / Linux
+source venv/bin/activate
 
-2.  **Create a virtual environment and install dependencies:**
-    ```bash
-    # For Windows
-    python -m venv venv
-    .\venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-    # For macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
+### 3) Configure environment variables
+Create a `.env` file in the project root and add:
 
-    # Install requirements
-    pip install -r requirements.txt
-    ```
+```env
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+OWNER_IDS=123456789012345678,234567890123456789
+LOG_LEVEL=INFO
+```
 
-3.  **Configure your bot:**
-    * Rename the `.env.example` file to `.env`.
-    * Open the `.env` file and add your Discord Bot Token and other necessary credentials.
+### 4) Run the bot
+```bash
+python bot.py
+```
 
-4.  **Run the bot:**
-    ```bash
-    python bot.py
-    ```
+## Included Commands
 
----
+- `!ping` — shows latency
+- `!about` — shows a clean bot info card
+- `!sync` — syncs application commands for the bot owner
 
-### ⚙️ Packed With Powerful Features
+## Project Structure
 
-#### 🔧 Admin & Moderation Suite
-* **Auto-moderation:** (anti-spam, anti-raid, filters)
-* **Role Manager:** (bulk role edit, timed roles)
-* **Channel Tools:** (temp channels, lockdown)
-* **Scheduled Messages & Auto-Deleters**
+```text
+OmniCore-Discord-Bot/
+├── bot.py
+├── cogs/
+├── requirements.txt
+└── README.md
+```
 
-#### 📊 Server Analytics
-* **Activity Tracking:** (messages, voice, joins)
-* **Weekly Health Reports:** (via DM or dashboard)
-* **User Leaderboards**
-* **Real-time Event Logs**
+## Planned Expansion Ideas
 
-#### 💼 Productivity Tools
-* **To-Do Lists:** (personal and shared)
-* **Sticky Messages**
-* **Reminders & Meeting Scheduler**
-* **Voting & Decision Tools**
+- Slash command framework for modern Discord UX
+- Moderation logs and audit helpers
+- Ticketing and support workflows
+- Reaction roles and onboarding tools
+- Scheduled announcements and reminders
+- Persistent configuration storage
+- Server analytics and usage insights
 
-#### 🎮 Community Features
-* **XP/Leveling System** with role rewards
-* **Custom Embeds, Polls, and Reaction Roles**
-* **Ticket System** with transcripts
-* **AFK System** with auto-replies
+## Notes
 
-#### 🛠️ Utility Commands
-* **Translate** (100+ languages)
-* **Weather, Time Zones, Countdowns**
-* **QR Code Generator**
-* **Wiki/Google Search Tools**
+- The bot now fails fast if `DISCORD_BOT_TOKEN` is missing.
+- Missing `cogs/` folders are handled safely during startup.
+- Logs are written in a structured format for easier debugging.
 
----
+## Contributing
 
-### 💎 Premium & Web Dashboard
+Pull requests are welcome. Keep changes focused, documented, and testable.
 
-OmniCore offers a premium version unlocked via a subscription, which includes access to a full web dashboard for seamless management, unlimited logs, custom branding, and more.
+## License
 
----
-
-### 🤝 Contributing
-
-Contributions are welcome! Please feel free to fork the repository, make changes, and submit a pull request.
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
----
-
-### 📄 License
-
-This project is licensed under the MIT License - see the `LICENSE` file for details.
+This project is licensed under the MIT License.
