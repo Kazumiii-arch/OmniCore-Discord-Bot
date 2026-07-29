@@ -1,77 +1,110 @@
-import os
 import asyncio
+import logging
+import os
+from pathlib import Path
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# --- Bot Configuration ---
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-OWNER_IDS = [int(id) for id in os.getenv("OWNER_IDS", "").split(',') if id]
-COGS_DIR = "cogs"
+OWNER_IDS = [int(owner_id) for owner_id in os.getenv("OWNER_IDS", "").split(",") if owner_id.strip()]
+COGS_DIR = Path("cogs")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger("OmniCore")
+
 
 class OmniCore(commands.Bot):
-    """The main Bot class for OmniCore."""
-    def __init__(self):
-        # Define intents required for the bot's features
-        intents = discord.Intents.default()
-        intents.message_content = True  # Required for message content-based commands/features
-        intents.members = True          # Required for tracking member joins/leaves and roles
-        intents.reactions = True        # Required for reaction roles/polls
-        
-        super().__init__(
-            command_prefix=commands.when_mentioned_or("!"), # Or your preferred prefix
-            intents=intents,
-            help_command=None, # We can create a custom one later
-            case_insensitive=True
-        )
-        self.owner_ids = OWNER_IDS
+    """Main OmniCore bot."""
 
-    async def setup_hook(self):
-        """This is called when the bot is preparing to start up."""
-        print("--- Loading Cogs ---")
-        for filename in os.listdir(COGS_DIR):
-            # Load all .py files in the cogs directory, excluding __init__.py
-            if filename.endswith(".py") and filename != "__init__.py":
-                cog_name = f"{COGS_DIR}.{filename[:-3]}"
-                try:
-                    await self.load_extension(cog_name)
-                    print(f"✅ Loaded Cog: {cog_name}")
-                except Exception as e:
-                    print(f"❌ Failed to load cog {cog_name}: {e}")
-        
-        # You can add database connection setup here later
-        # await self.connect_database()
-        
-    async def on_ready(self):
-        """Event that fires when the bot is fully connected and ready."""
-        print("--- Bot is Online ---")
-        print(f"Logged in as: {self.user.name} | {self.user.id}")
-        print(f"Discord.py Version: {discord.__version__}")
-        print(f"Serving {len(self.guilds)} guilds.")
-        print("-----------------------")
-        
-        # Set a custom presence
+    def __init__(self) -> None:
+        intents = discord.Intents.default()
+        intents.message_content = True
+        intents.members = True
+        intents.reactions = True
+        intents.guilds = True
+
+        super().__init__(
+            command_prefix=commands.when_mentioned_or("!"),
+            intents=intents,
+            help_command=None,
+            case_insensitive=True,
+        )
+        self.owner_ids = set(OWNER_IDS)
+
+    async def setup_hook(self) -> None:
+        if not COGS_DIR.exists():
+            logger.warning("Cog directory '%s' was not found; skipping extension load.", COGS_DIR)
+            return
+
+        logger.info("Loading cogs from %s", COGS_DIR)
+        for path in sorted(COGS_DIR.glob("*.py")):
+            if path.name == "__init__.py":
+                continue
+            extension = f"{COGS_DIR.name}.{path.stem}"
+            try:
+                await self.load_extension(extension)
+                logger.info("Loaded cog: %s", extension)
+            except Exception:
+                logger.exception("Failed to load cog: %s", extension)
+
+    async def on_ready(self) -> None:
+        logger.info("Bot online as %s (%s)", self.user, self.user.id if self.user else "unknown")
+        logger.info("Discord.py version: %s", discord.__version__)
+        logger.info("Connected to %d guild(s)", len(self.guilds))
         await self.change_presence(activity=discord.Game(name="!help | OmniCore"))
 
-    # You might want a global error handler
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandNotFound):
-            return # Don't send a message for commands that don't exist
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f"Missing a required argument. Use `!help {ctx.command.name}` for info.")
-        elif isinstance(error, commands.NotOwner):
-            await ctx.send("You do not have permission to use this command.")
-        else:
-            print(f"An unhandled error occurred: {error}")
-            await ctx.send("An unexpected error occurred. Please try again later.")
+    @commands.command(name="ping")
+    async def ping(self, ctx: commands.Context) -> None:
+        latency_ms = round(self.latency * 1000)
+        await ctx.reply(f"Pong! `{latency_ms}ms`")
 
-async def main():
-    """Main function to create and run the bot."""
+    @commands.command(name="about")
+    async def about(self, ctx: commands.Context) -> None:
+        embed = discord.Embed(
+            title="OmniCore",
+            description="An all-in-one Discord bot focused on moderation, utility, and community tools.",
+            color=discord.Color.blurple(),
+        )
+        embed.add_field(name="Servers", value=str(len(self.guilds)), inline=True)
+        embed.add_field(name="Prefix", value="`!`", inline=True)
+        embed.set_footer(text="Built with discord.py")
+        await ctx.reply(embed=embed)
+
+    @commands.command(name="sync")
+    @commands.is_owner()
+    async def sync(self, ctx: commands.Context) -> None:
+        synced = await self.tree.sync()
+        await ctx.reply(f"Synced {len(synced)} application command(s).")
+
+    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
+        if isinstance(error, commands.CommandNotFound):
+            return
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(f"Missing a required argument. Use `!help {ctx.command.name}` for info.")
+            return
+        if isinstance(error, commands.NotOwner):
+            await ctx.send("You do not have permission to use that command.")
+            return
+        logger.exception("Unhandled command error", exc_info=error)
+        await ctx.send("An unexpected error occurred. Please try again later.")
+
+
+async def main() -> None:
+    if not TOKEN:
+        raise RuntimeError("DISCORD_BOT_TOKEN is missing from the environment.")
+
     bot = OmniCore()
-    await bot.start(TOKEN)
+    async with bot:
+        await bot.start(TOKEN)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
